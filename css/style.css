@@ -13,6 +13,7 @@
 .dice > img{
     display: block;
     border-radius: 15px;
+    margin-bottom: 10px;
 }
 
 .dice.locked{
@@ -34,4 +35,6 @@ body {
 
 .control-container {
     align-self: center;
+    order: -1;
+    margin-top: 570px;
 }

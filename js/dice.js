@@ -49,6 +49,12 @@ class Dice{
         });
     }
 
+    reset(){
+        this.locked = false;
+        this.container.classList.remove("locked");
+        this.value = 1;
+    }
+
     addClickHandler(){
         this.container.addEventListener("click", ()=> {
             this.container.classList.toggle("locked");
