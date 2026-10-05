@@ -53,11 +53,6 @@
             }
         }
         function calculateTotal(){
-            // let sum = 0;
-            // for(let d of dice){
-            //     sum += d.value;
-            // }
-            // reduce
             let sum = dice.reduce((accumulator, element) => {
                 return accumulator + element.value;
             },0); //0 is the starting value for the accumulator
@@ -73,6 +68,75 @@
             rollBtn.disabled = false;
             resetBtn.disabled = true;
         }
+        //upper section:
+        function ones(){
+            return dice.filter(d => d.value === 1).length;
+        }
+
+        function twos(){
+            return dice.filter(d => d.value === 2).length;
+        }
+
+        function threes(){
+            return dice.filter(d => d.value === 3).length;
+        }
+
+        function fours(){
+            return dice.filter(d => d.value === 4).length;
+        }
+
+        function fives(){
+            return dice.filter(d => d.value === 5).length;
+        }
+
+        function sixes(){
+            return dice.filter(d => d.value === 6).length;
+        }
+
+        function sumofUpperSection(){
+            let sum = ones() * 1 + twos() * 2 + threes() * 3 + fours() * 4 + fives() * 5 + sixes() * 6;
+            if(sum >= 63){
+                return 63 + 35;
+            }
+            return sum;
+        }
+
+        //lower section:
+        function threeOfAKind(){
+            return dice.filter(d => d.value === 3).length >= 3;
+        }
+
+        function fourOfAKind(){
+            return dice.filter(d => d.value === 4).length >= 4;
+        }
+
+        function fullHouse(){
+            return dice.filter(d => d.value === 3).length >= 3 && dice.filter(d => d.value === 2).length >= 2;
+        }
+
+        function smallStraight(){
+            return dice.filter(d => d.value === 1).length >= 1 && dice.filter(d => d.value === 2).length >= 1 && dice.filter(d => d.value === 3).length >= 1 && dice.filter(d => d.value === 4).length >= 1;
+        }
+
+        function largeStraight(){
+            return dice.filter(d => d.value === 2).length >= 1 && dice.filter(d => d.value === 3).length >= 1 && dice.filter(d => d.value === 4).length >= 1 && dice.filter(d => d.value === 5).length >= 1 && dice.filter(d => d.value === 6).length >= 1;
+        }
+
+        function yahtzee(){
+            return dice.filter(d => d.value === 5).length >= 5;
+        }
+
+        function additionalYahtzee(){
+        }
+
+        function chance(){
+            return true;
+        }
+
+        function totalScore(){
+            return sumofUpperSection() + (threeOfAKind() ? 3 : 0) + (fourOfAKind() ? 4 : 0) + (fullHouse() ? 5 : 0) + (smallStraight() ? 6 : 0) + (largeStraight() ? 7 : 0) + (yahtzee() ? 8 : 0) + (additionalYahtzee() ? 8 : 0) + (chance() ? dice.reduce((acc, d) => acc + d.value, 0) : 0);
+        }
+
     </script>
 </body>
 </html>

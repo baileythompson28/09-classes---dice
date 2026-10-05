@@ -20,12 +20,11 @@
 .dice > img{
     display: block;
     border-radius: 15px;
-    margin-bottom: 10px;
 }
 
 .dice.locked{
     border: 5px solid rgb(141, 185, 168);
-    border-radius: 10px;
+    border-radius: 15px;
 }
 
 .container {
@@ -41,7 +40,7 @@ body {
 .control-container {
     align-self: center;
     order: -1;
-    margin-top: 590px;
+    margin-top: 390px;
     display: flex;
     gap: 12px;
 }
