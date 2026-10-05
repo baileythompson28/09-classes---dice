@@ -21,122 +21,96 @@
             <button id="resetBtn" onclick="resetDice()" disabled>new turn</button>
         </div>
     </div>
+    <main class="scorecard" aria-labelledby="scorecardTitle">
+        <h1 id="scorecardTitle">Scorecard</h1>
+        <div class="scorecard-scroll">
+        </div>
+        <p id="gameStatus" class="game-status" aria-live="polite">Roll the dice to begin your turn.</p>
+    </main>
     <script>
-        const diceContainers = document.querySelectorAll(".dice");
-        let dice = [];
-        diceContainers.forEach((container, idx)=>{
-            dice.push(new Dice(container))
-        });
-
+        const dice = Array.from(document.querySelectorAll(".dice"), container => new Dice(container));
         const rollBtn = document.querySelector("#rollBtn");
         const resetBtn = document.querySelector("#resetBtn");
+        const scorecardBody = document.querySelector("#scorecardBody");
+        const gameStatus = document.querySelector("#gameStatus");
+        const counts = new Array(7).fill(0);
+        const categories = [
+            { name: "Ones", section: "Upper", score: () => counts[1] },
+            { name: "Twos", section: "Upper", score: () => counts[2] * 2 },
+            { name: "Threes", section: "Upper", score: () => counts[3] * 3 },
+            { name: "Fours", section: "Upper", score: () => counts[4] * 4 },
+            { name: "Fives", section: "Upper", score: () => counts[5] * 5 },
+            { name: "Sixes", section: "Upper", score: () => counts[6] * 6 },
+            { name: "Three of a kind", section: "Lower", score: () => counts.some(count => count >= 3) ? diceTotal() : 0 },
+            { name: "Four of a kind", section: "Lower", score: () => counts.some(count => count >= 4) ? diceTotal() : 0 },
+            { name: "Full house", section: "Lower", score: () => counts.includes(3) && counts.includes(2) ? 25 : 0 },
+            { name: "Small straight", section: "Lower", score: () => hasStraight(4) ? 30 : 0 },
+            { name: "Large straight", section: "Lower", score: () => hasStraight(5) ? 40 : 0 },
+            { name: "Yahtzee", section: "Lower", score: () => counts.includes(5) ? 50 : 0 },
+            { name: "Chance", section: "Lower", score: () => diceTotal() }
+        ];
+        const savedScores = new Map();
         let rollCount = 0;
         let isRolling = false;
+        let turnComplete = false;
 
-        async function rollDice(){
-            if(rollCount >= 3 || isRolling) return;
+        function diceTotal() {
+            return dice.reduce((sum, die) => sum + die.value, 0);
+        }
+
+        function hasStraight(length) {
+            const sequence = counts.slice(1).map(count => count > 0);
+            let consecutive = 0;
+            for (const present of sequence) {
+                consecutive = present ? consecutive + 1 : 0;
+                if (consecutive >= length) return true;
+            }
+            return false;
+        }
+
+        function updateDiceCounts() {
+            counts.fill(0);
+            dice.forEach(die => counts[die.value]++);
+        }
+
+        function buildScorecard() {
+        }
+
+        function updateScorecard() { 
+        }
+
+        async function rollDice() {
+            if (rollCount >= 3 || isRolling || turnComplete) return;
             isRolling = true;
             rollCount++;
             rollBtn.disabled = true;
-            let rolls = []; //will hold Promises
-            dice.forEach((d) => {
-                rolls.push(d.roll({rollTime: 100, speed: 30}));
-            });
-            await Promise.all(rolls); //hold execution until all rolls are resolved
-            console.log(calculateTotal());
+            updateScorecard();
+            await Promise.all(dice.map(die => die.roll({ rollTime: 100, speed: 30 })));
             isRolling = false;
-            if(rollCount === 3){
+            updateScorecard();
+            rollBtn.disabled = rollCount === 3;
+            if (rollCount === 3) {
                 rollBtn.textContent = "turn complete";
-                resetBtn.disabled = false;
+                gameStatus.textContent = "You used all 3 rolls. Choose a category to save your score.";
             } else {
-                rollBtn.disabled = false;
+                gameStatus.textContent = `Roll ${rollCount} of 3 complete. Roll again or choose a category.`;
             }
         }
-        function calculateTotal(){
-            let sum = dice.reduce((accumulator, element) => {
-                return accumulator + element.value;
-            },0); //0 is the starting value for the accumulator
-            return sum;
-        }
 
-        function resetDice(){
-            dice.forEach((d) => {
-                d.reset();
-            });
+        function resetDice() {
+            if (savedScores.size === categories.length) return;
+            dice.forEach(die => die.reset());
             rollCount = 0;
+            turnComplete = false;
             rollBtn.textContent = "roll dice";
             rollBtn.disabled = false;
             resetBtn.disabled = true;
-        }
-        //upper section:
-        function ones(){
-            return dice.filter(d => d.value === 1).length;
+            gameStatus.textContent = "Roll the dice to begin your turn.";
+            updateScorecard();
         }
 
-        function twos(){
-            return dice.filter(d => d.value === 2).length;
-        }
-
-        function threes(){
-            return dice.filter(d => d.value === 3).length;
-        }
-
-        function fours(){
-            return dice.filter(d => d.value === 4).length;
-        }
-
-        function fives(){
-            return dice.filter(d => d.value === 5).length;
-        }
-
-        function sixes(){
-            return dice.filter(d => d.value === 6).length;
-        }
-
-        function sumofUpperSection(){
-            let sum = ones() * 1 + twos() * 2 + threes() * 3 + fours() * 4 + fives() * 5 + sixes() * 6;
-            if(sum >= 63){
-                return 63 + 35;
-            }
-            return sum;
-        }
-
-        //lower section:
-        function threeOfAKind(){
-            return dice.filter(d => d.value === 3).length >= 3;
-        }
-
-        function fourOfAKind(){
-            return dice.filter(d => d.value === 4).length >= 4;
-        }
-
-        function fullHouse(){
-            return dice.filter(d => d.value === 3).length >= 3 && dice.filter(d => d.value === 2).length >= 2;
-        }
-
-        function smallStraight(){
-            return dice.filter(d => d.value === 1).length >= 1 && dice.filter(d => d.value === 2).length >= 1 && dice.filter(d => d.value === 3).length >= 1 && dice.filter(d => d.value === 4).length >= 1;
-        }
-
-        function largeStraight(){
-            return dice.filter(d => d.value === 2).length >= 1 && dice.filter(d => d.value === 3).length >= 1 && dice.filter(d => d.value === 4).length >= 1 && dice.filter(d => d.value === 5).length >= 1 && dice.filter(d => d.value === 6).length >= 1;
-        }
-
-        function yahtzee(){
-            return dice.filter(d => d.value === 5).length >= 5;
-        }
-
-        function additionalYahtzee(){
-        }
-
-        function chance(){
-            return true;
-        }
-
-        function totalScore(){
-            return sumofUpperSection() + (threeOfAKind() ? 3 : 0) + (fourOfAKind() ? 4 : 0) + (fullHouse() ? 5 : 0) + (smallStraight() ? 6 : 0) + (largeStraight() ? 7 : 0) + (yahtzee() ? 8 : 0) + (additionalYahtzee() ? 8 : 0) + (chance() ? dice.reduce((acc, d) => acc + d.value, 0) : 0);
-        }
-
+        buildScorecard();
+        updateScorecard();
     </script>
 </body>
 </html>

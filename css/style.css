@@ -31,6 +31,7 @@
     background-color: rgb(122, 180, 148);
     display: flex;
     flex-direction: column;
+    align-items: center;
 }
 
 body {
@@ -40,7 +41,7 @@ body {
 .control-container {
     align-self: center;
     order: -1;
-    margin-top: 390px;
+    margin-top: 24px;
     display: flex;
     gap: 12px;
 }
@@ -73,4 +74,25 @@ button:disabled {
     box-shadow: none;
     cursor: not-allowed;
     opacity: 0.9;
+}
+
+.scorecard {
+    width: min(92%, 760px);
+    box-sizing: border-box;
+    margin: 0 auto 40px;
+    padding: 24px;
+    background: #f2f7f3;
+    border: 4px solid #79502e;
+    border-radius: 16px;
+    color: #203c2c;
+}
+
+.scorecard h1 {
+    margin: 0;
+}
+
+.scorecard table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
 }
