@@ -1,116 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>dice</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script src="js/dice.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dice</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="dice-container">
-            <div class="dice"></div>
-            <div class="dice"></div>
-            <div class="dice"></div>
-            <div class="dice"></div>
-            <div class="dice"></div>
-        </div>
-        <div class="control-container">
-            <button id="rollBtn" onclick="rollDice()">roll dice</button>
-            <button id="resetBtn" onclick="resetDice()" disabled>new turn</button>
-        </div>
+  <div class="container">
+    <div class="dice-container">
+      <div class="dice"></div>
+      <div class="dice"></div>
+      <div class="dice"></div>
+      <div class="dice"></div>
+      <div class="dice"></div>
     </div>
-    <main class="scorecard" aria-labelledby="scorecardTitle">
-        <h1 id="scorecardTitle">Scorecard</h1>
-        <div class="scorecard-scroll">
+    <div class="control-container">
+      <button id="rollBtn" type="button">Roll</button>
+      <button id="resetBtn" type="button" disabled>New turn</button>
+    </div>
+  </div>
+
+  <section class="scorecard">
+    <h1>Scorecard</h1>
+    <div id="scorecard"></div>
+    <p id="gameStatus">Roll the dice to begin.</p>
+  </section>
+
+  <script src="js/dice.js"></script>
+  <script>
+    const dice = [...document.querySelectorAll('.dice')].map(d => new Dice(d));
+    const counts = Array(7).fill(0);
+    const categories = [
+      { name: 'Ones', score: () => counts[1] },
+      { name: 'Twos', score: () => counts[2] * 2 },
+      { name: 'Threes', score: () => counts[3] * 3 },
+      { name: 'Fours', score: () => counts[4] * 4 },
+      { name: 'Fives', score: () => counts[5] * 5 },
+      { name: 'Sixes', score: () => counts[6] * 6 },
+      { name: 'Three of a kind', score: () => counts.some(c => c >= 3) ? total() : 0 },
+      { name: 'Four of a kind', score: () => counts.some(c => c >= 4) ? total() : 0 },
+      { name: 'Full house', score: () => counts.includes(3) && counts.includes(2) ? 25 : 0 },
+      { name: 'Small straight', score: () => hasStraight(4) ? 30 : 0 },
+      { name: 'Large straight', score: () => hasStraight(5) ? 40 : 0 },
+      { name: 'Yahtzee', score: () => counts.includes(5) ? 50 : 0 },
+      { name: 'Chance', score: () => total() }
+    ];
+
+    const saved = new Map();
+    const rollBtn = document.getElementById('rollBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const scorecard = document.getElementById('scorecard');
+    const gameStatus = document.getElementById('gameStatus');
+    let rolls = 0;
+    let busy = false;
+    let turnIsOver = false;
+
+    function total() { return dice.reduce((sum, d) => sum + d.value, 0); }
+    function hasStraight(n) {
+      let run = 0;
+      for (const value of counts.slice(1)) {
+        run = value ? run + 1 : 0;
+        if (run >= n) return true;
+      }
+      return false;
+    }
+    function updateCounts() {
+      counts.fill(0);
+      dice.forEach(d => counts[d.value]++);
+    }
+
+    // i looked this stuff up, i had no clue how to do this without it being longer than it needs to be
+    function render() {
+      updateCounts();
+      scorecard.innerHTML = categories.map(cat => `
+        <div class="row">
+          <button type="button" data-cat="${cat.name}" ${saved.has(cat.name) || rolls === 0 ? 'disabled' : ''}>${cat.name}</button>
+          <span>${saved.has(cat.name) ? saved.get(cat.name) : (rolls ? cat.score() : '—')}</span>
         </div>
-        <p id="gameStatus" class="game-status" aria-live="polite">Roll the dice to begin your turn.</p>
-    </main>
-    <script>
-        const dice = Array.from(document.querySelectorAll(".dice"), container => new Dice(container));
-        const rollBtn = document.querySelector("#rollBtn");
-        const resetBtn = document.querySelector("#resetBtn");
-        const scorecardBody = document.querySelector("#scorecardBody");
-        const gameStatus = document.querySelector("#gameStatus");
-        const counts = new Array(7).fill(0);
-        const categories = [
-            { name: "Ones", section: "Upper", score: () => counts[1] },
-            { name: "Twos", section: "Upper", score: () => counts[2] * 2 },
-            { name: "Threes", section: "Upper", score: () => counts[3] * 3 },
-            { name: "Fours", section: "Upper", score: () => counts[4] * 4 },
-            { name: "Fives", section: "Upper", score: () => counts[5] * 5 },
-            { name: "Sixes", section: "Upper", score: () => counts[6] * 6 },
-            { name: "Three of a kind", section: "Lower", score: () => counts.some(count => count >= 3) ? diceTotal() : 0 },
-            { name: "Four of a kind", section: "Lower", score: () => counts.some(count => count >= 4) ? diceTotal() : 0 },
-            { name: "Full house", section: "Lower", score: () => counts.includes(3) && counts.includes(2) ? 25 : 0 },
-            { name: "Small straight", section: "Lower", score: () => hasStraight(4) ? 30 : 0 },
-            { name: "Large straight", section: "Lower", score: () => hasStraight(5) ? 40 : 0 },
-            { name: "Yahtzee", section: "Lower", score: () => counts.includes(5) ? 50 : 0 },
-            { name: "Chance", section: "Lower", score: () => diceTotal() }
-        ];
-        const savedScores = new Map();
-        let rollCount = 0;
-        let isRolling = false;
-        let turnComplete = false;
+      `).join('');
 
-        function diceTotal() {
-            return dice.reduce((sum, die) => sum + die.value, 0);
-        }
+      scorecard.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => saveScore(btn.dataset.cat));
+      });
+    }
+    //
 
-        function hasStraight(length) {
-            const sequence = counts.slice(1).map(count => count > 0);
-            let consecutive = 0;
-            for (const present of sequence) {
-                consecutive = present ? consecutive + 1 : 0;
-                if (consecutive >= length) return true;
-            }
-            return false;
-        }
+    function saveScore(name) {
+      if (saved.has(name) || busy) return;
+      const score = categories.find(c => c.name === name).score();
+      saved.set(name, score);
+      turnIsOver = true;
+      rollBtn.disabled = true;
+      resetBtn.disabled = false;
+      gameStatus.textContent = `Saved ${name} for ${score} points.`;
+      render();
+    }
 
-        function updateDiceCounts() {
-            counts.fill(0);
-            dice.forEach(die => counts[die.value]++);
-        }
+    async function rollDice() {
+      if (rolls >= 3 || busy || turnIsOver) return;
+      busy = true;
+      rolls++;
+      rollBtn.disabled = true;
+      render();
+      await Promise.all(dice.map(d => d.roll({ rollTime: 100, speed: 30 })));
+      busy = false;
+      render();
+      rollBtn.disabled = rolls === 3;
+      if (rolls === 3) {
+        turnIsOver = true;
+        resetBtn.disabled = false;
+        gameStatus.textContent = 'Used all 3 rolls. Choose a category.';
+      } else {
+        gameStatus.textContent = `Roll ${rolls} of 3 complete.`;
+      }
+    }
 
-        function buildScorecard() {
-        }
+    function resetDice() {
+      if (saved.size === categories.length) return;
+      dice.forEach(d => d.reset());
+      rolls = 0;
+      turnIsOver = false;
+      rollBtn.disabled = false;
+      resetBtn.disabled = true;
+      gameStatus.textContent = 'Roll the dice to begin.';
+      render();
+    }
 
-        function updateScorecard() { 
-        }
-
-        async function rollDice() {
-            if (rollCount >= 3 || isRolling || turnComplete) return;
-            isRolling = true;
-            rollCount++;
-            rollBtn.disabled = true;
-            updateScorecard();
-            await Promise.all(dice.map(die => die.roll({ rollTime: 100, speed: 30 })));
-            isRolling = false;
-            updateScorecard();
-            rollBtn.disabled = rollCount === 3;
-            if (rollCount === 3) {
-                rollBtn.textContent = "turn complete";
-                gameStatus.textContent = "You used all 3 rolls. Choose a category to save your score.";
-            } else {
-                gameStatus.textContent = `Roll ${rollCount} of 3 complete. Roll again or choose a category.`;
-            }
-        }
-
-        function resetDice() {
-            if (savedScores.size === categories.length) return;
-            dice.forEach(die => die.reset());
-            rollCount = 0;
-            turnComplete = false;
-            rollBtn.textContent = "roll dice";
-            rollBtn.disabled = false;
-            resetBtn.disabled = true;
-            gameStatus.textContent = "Roll the dice to begin your turn.";
-            updateScorecard();
-        }
-
-        buildScorecard();
-        updateScorecard();
-    </script>
+    rollBtn.addEventListener('click', rollDice);
+    resetBtn.addEventListener('click', resetDice);
+    render();
+  </script>
 </body>
 </html>
