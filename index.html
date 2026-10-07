@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dice</title>
+  <title>yahtzee</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -23,7 +23,7 @@
 
   <section class="scorecard">
     <h1>Scorecard</h1>
-    <div id="scorecard"></div>
+    <div id="scorecard"></div><hr>
     <p id="gameStatus">Roll the dice to begin.</p>
   </section>
 
@@ -43,9 +43,10 @@
       { name: 'Full house', score: () => counts.includes(3) && counts.includes(2) ? 25 : 0 },
       { name: 'Small straight', score: () => hasStraight(4) ? 30 : 0 },
       { name: 'Large straight', score: () => hasStraight(5) ? 40 : 0 },
-      { name: 'Yahtzee', score: () => counts.includes(5) ? 50 : 0 },
-      { name: 'Chance', score: () => total() }
+      { name: 'Chance', score: () => total() },
+      { name: 'Yahtzee', score: () => counts.includes(5) ? 50 : 0 }
     ];
+    const upperCategories = categories.slice(0, 6);
 
     const saved = new Map();
     const rollBtn = document.getElementById('rollBtn');
@@ -56,7 +57,20 @@
     let busy = false;
     let turnIsOver = false;
 
-    function total() { return dice.reduce((sum, d) => sum + d.value, 0); }
+    function total() { 
+      return dice.reduce((sum, d) => sum + d.value, 0); 
+    }
+    function upperSubtotal() {
+      return upperCategories.reduce((sum, category) => sum + (saved.get(category.name) || 0), 0);
+    }
+
+    function upperBonus() { 
+      return upperSubtotal() >= 63 ? 35 : 0; 
+    }
+    function grandTotal() {
+      return [...saved.values()].reduce((sum, score) => sum + score, 0) + upperBonus();
+    }
+    
     function hasStraight(n) {
       let run = 0;
       for (const value of counts.slice(1)) {
@@ -70,7 +84,6 @@
       dice.forEach(d => counts[d.value]++);
     }
 
-    // i looked this stuff up, i had no clue how to do this without it being longer than it needs to be
     function render() {
       updateCounts();
       scorecard.innerHTML = categories.map(cat => `
@@ -78,13 +91,16 @@
           <button type="button" data-cat="${cat.name}" ${saved.has(cat.name) || rolls === 0 ? 'disabled' : ''}>${cat.name}</button>
           <span>${saved.has(cat.name) ? saved.get(cat.name) : (rolls ? cat.score() : '—')}</span>
         </div>
-      `).join('');
+      `).join('') + `
+        <div class="row"><hr><hr>Subtotal for 1-6's: <span>${upperSubtotal()}</span></div>
+        <div class="row">Bonus added: <span>${upperBonus()}</span></div>
+        <div class="row">Game total: <span>${grandTotal()}<hr></span></div>
+      `;
 
       scorecard.querySelectorAll('button').forEach(btn => {
         btn.addEventListener('click', () => saveScore(btn.dataset.cat));
       });
     }
-    //
 
     function saveScore(name) {
       if (saved.has(name) || busy) return;
@@ -93,7 +109,7 @@
       turnIsOver = true;
       rollBtn.disabled = true;
       resetBtn.disabled = false;
-      gameStatus.textContent = `Saved ${name} for ${score} points.`;
+      gameStatus.textContent = `${name} for ${score} points.`;
       render();
     }
 
@@ -110,9 +126,9 @@
       if (rolls === 3) {
         turnIsOver = true;
         resetBtn.disabled = false;
-        gameStatus.textContent = 'Used all 3 rolls. Choose a category.';
+        gameStatus.textContent = ('Used all 3 rolls.');
       } else {
-        gameStatus.textContent = `Roll ${rolls} of 3 complete.`;
+        gameStatus.textContent = (`Roll ${rolls} of 3 complete.`);
       }
     }
 
@@ -123,7 +139,7 @@
       turnIsOver = false;
       rollBtn.disabled = false;
       resetBtn.disabled = true;
-      gameStatus.textContent = 'Roll the dice to begin.';
+      gameStatus.textContent = 'Roll dice to begin.';
       render();
     }
 
