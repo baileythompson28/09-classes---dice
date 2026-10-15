@@ -33,15 +33,21 @@
 }
 
 body {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-areas:
+        "game score"
+        "how score";
+    align-items: start;
     gap: 24px;
     padding: 24px;
     box-sizing: border-box;
     margin: 0;
     background-color: #729e81;
+}
+
+.container {
+    grid-area: game;
 }
 
 button {
@@ -65,6 +71,7 @@ button:disabled {
 }
 
 .scorecard {
+    grid-area: score;
     width: min(92%, 300px);
     box-sizing: border-box;
     margin: 16px 0;
@@ -73,4 +80,25 @@ button:disabled {
     border-radius: 16px;
     color: white;
     background-color: #28734f;
+}
+
+.howToPlay {
+    grid-area: how;
+    box-sizing: border-box;
+    margin: 16px 0;
+    padding: 20px;
+    border: 7px solid #79502e;
+    border-radius: 16px;
+    color: white;
+    background-color: #28734f;
+}
+
+@media (max-width: 700px) {
+    body {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas:
+            "game"
+            "score"
+            "how";
+    }
 }

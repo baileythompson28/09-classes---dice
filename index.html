@@ -1,3 +1,9 @@
+<!-- reset game button -->
+<!-- have to choose smth, doesnt roll again until you do -->
+<!-- more than 1 yahtzee is allowed -->
+<!-- announces total -->
+<!-- maybe smth in the empty space where it talks about how to play and explains each catagory -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,9 +28,24 @@
   </div>
 
   <section class="scorecard">
-    <h1>Scorecard</h1>
+    <h1>Scorecard:</h1>
     <div id="scorecard"></div><hr>
     <p id="gameStatus">Roll the dice to begin.</p>
+  </section>
+
+  <section class="howToPlay">
+    <h1>How To Play:</h1>
+    <div id="howToPlay"></div><hr>
+    <p id="CatagoriesExplained">Explaining the catagories:</p><hr>
+    <p>- 1's, 2's, 3's, 4's, 5's, 6's: sums of all rolled.</p>
+    <p>- Three of a Kind: score is the sum of all five dice. </p>
+    <p>- Four of a Kind: score is the sum of all five dice. </p>
+    <p>- Full House: fixed score of 25 points. </p>
+    <p>- Small Straight: fixed score of 30 points. </p>
+    <p>- Large Straight: fixed score of 40 points. </p>
+    <p>- Yahtzee: first Yahtzee scores 50 points.  </p>
+    <p>- Additional Yahtzee: 100-point bonus if the first Yahtzee has already been scored. </p>
+    <p>- Chance: any combination; score is the sum of all five dice, used as a fallback. </p>
   </section>
 
   <script src="js/dice.js"></script>
